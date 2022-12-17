@@ -1,6 +1,6 @@
 import os
 import sys
-from random import randint
+from random import randint, randrange
 import pygame
 
 # Изображение не получится загрузить
@@ -10,6 +10,7 @@ SIZE = WIDTH, HEIGHT = 500, 500
 screen = pygame.display.set_mode(SIZE)
 BACKGROUND = 'white'
 COUNT_BOMBS = 50
+
 
 
 
@@ -29,19 +30,39 @@ def load_image(name, colorkey=None):
         image = image.convert_alpha()
     return image
 
+
+class Bomb(pygame.sprite.Sprite):
+    image = load_image("bomb.png")
+    boom = load_image('boom.png')
+
+    def __init__(self, *group):
+        # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
+        # Это очень важно!!!
+        super().__init__(*group)
+        self.image = Bomb.image
+        self.rect = self.image.get_rect()
+        self.rect.x = randrange(WIDTH)
+        self.rect.y = randrange(HEIGHT)
+
+    def update(self, *args):
+        self.rect = self.rect.move(randrange(3) - 1,
+                                   randrange(3) - 1)
+        if args and args[0].type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(args[0].pos):
+                self.image = Bomb.boom
+
+
 all_sprites = pygame.sprite.Group()
 for _ in range(COUNT_BOMBS):
-    bomb = pygame.sprite.Sprite(all_sprites)
-    bomb.image = load_image('bomb.png')
-    bomb.rect = bomb.image.get_rect()
-    bomb.rect.x = randint(0, WIDTH)
-    bomb.rect.y = randint(0, HEIGHT)
+    Bomb(all_sprites)
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        all_sprites.update(event)
     screen.fill(BACKGROUND)
+    all_sprites.update()
     all_sprites.draw(screen)
     pygame.display.flip()
 pygame.quit()
